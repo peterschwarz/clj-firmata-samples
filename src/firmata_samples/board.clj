@@ -3,20 +3,23 @@
             [clojure.core.async :refer [chan go-loop <! >! >!! timeout] :as a]))
 
 
+(defn reset-board
+  "Resets the board on the given port to the basic state."
+  [port-name]
+  (let [board (f/open-board port-name)]
+    (f/close! board)))
 
 (defprotocol BoardExample
-  (get-doc [this])
   (run-example [this])
   (stop-example [this]))
 
 (defmacro defexample
   [name doc-str board-def & body]
 
-  `(def ~name
+  `(def ^{:doc ~doc-str}
+     ~name
        (let [state# (atom {})]
          (reify BoardExample
-           (get-doc [_] ~doc-str)
-
            (run-example
             [_]
             (reset! state# {:board ~(last board-def) :channel (chan 1)})
@@ -35,7 +38,7 @@
 
 
 (defmacro run-loop
-  [board & body]
+  [& body]
   `(do
      (assert ~'__control-ch "must be called within a defexample")
      (let [c# ~'__control-ch]
