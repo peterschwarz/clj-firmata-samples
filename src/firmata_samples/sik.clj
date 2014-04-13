@@ -222,3 +222,27 @@
        (set-digital board pin :high)
        (<!! (timeout 100))
        (set-digital board pin :low)))))
+
+(defexample push-buttons
+  "5) Push buttons
+
+  Dealing with digital inputs."
+  [board (open-board port-name)]
+
+  (wait-to-settle)
+
+  (let [pressed (atom [false false])
+        light-led (fn [[left right]]
+                    (set-digital board 13 (if (and (or left right) (not (and left right))) :high :low)))]
+    (-> board
+        (set-pin-mode 2 :input)
+        (enable-digital-port-reporting 2 true))
+
+    (-> board
+        (set-pin-mode 3 :input)
+        (enable-digital-port-reporting 3 true))
+
+    (on-digital-event board 2 #(light-led (reset! pressed [(= :low (:value %)) (last @pressed) ])))
+
+    (on-digital-event board 3 #(light-led (reset! pressed [(first @pressed) (= :low (:value %))]))))
+  )
