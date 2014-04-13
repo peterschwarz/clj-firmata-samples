@@ -1,13 +1,15 @@
 (ns firmata-samples.board
-  (:require [firmata.core :as f]
+  (:require [firmata-samples.config :refer [port-name]]
+            [firmata.core :as f]
             [clojure.core.async :refer [chan go-loop <! >! >!! timeout] :as a]))
 
 
 (defn reset-board
   "Resets the board on the given port to the basic state."
-  [port-name]
-  (let [board (f/open-board port-name)]
-    (f/close! board)))
+  ([] (reset-board port-name))
+  ([port]
+  (let [board (f/open-board port)]
+    (f/close! board))))
 
 (defprotocol BoardExample
   (run-example [this])

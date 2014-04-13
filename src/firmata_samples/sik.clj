@@ -144,6 +144,81 @@
                    (set-analog board green-pin 0)
                    (set-analog board blue-pin (- 255 x 512))))
 
-    (<!! (timeout 10))
-    )
-  )
+    (<!! (timeout 10))))
+
+(defexample multiple-leds
+  "4) Multiple LEDs - one after another
+
+  A variety of samples which can be used with the 8-LED circuit."
+  [board (open-board port-name)]
+
+  (wait-to-settle)
+
+  (let [pins [2,3,4,5,6,7,8,9]]
+
+    (run-loop
+     ; one after the other
+     (doseq [v [:high :low]]
+       (doseq [pin pins]
+         (set-digital board pin v)
+         (<!! (timeout 100))))
+     )))
+
+(defexample multiple-leds-single
+  "4) Multiple LEDs - one at a time and reverse
+
+  A variety of samples which can be used with the 8-LED circuit."
+  [board (open-board port-name)]
+
+  (wait-to-settle)
+
+  (let [pins [2,3,4,5,6,7,8,9]]
+
+    (run-loop
+
+     ; one at a time
+     (doseq [pin pins]
+       (set-digital board pin :high)
+       (<!! (timeout 100))
+       (set-digital board pin :low))
+
+     ;reverse it
+     (doseq [pin (reverse pins)]
+       (set-digital board pin :high)
+       (<!! (timeout 100))
+       (set-digital board pin :low)))))
+
+(defexample multiple-leds-marquee
+  "4) Multiple LEDs - marquee - mimic \"chase lights\" like those around signs.
+
+  A variety of samples which can be used with the 8-LED circuit."
+  [board (open-board port-name)]
+
+  (wait-to-settle)
+
+  (let [pins [2,3,4,5,6,7,8,9]]
+
+    (run-loop
+     ; marquee - mimic "chase lights" like those around signs.
+     (doseq [index (range 4)]
+       (set-digital board (nth pins index) :high)
+       (set-digital board (+ (nth pins index) 4) :high)
+       (<!! (timeout 200))
+       (set-digital board (nth pins index) :low)
+       (set-digital board (+ (nth pins index) 4) :low)))))
+
+(defexample multiple-leds-random
+  "4) Multiple LEDs - pick a random light
+
+  A variety of samples which can be used with the 8-LED circuit."
+  [board (open-board port-name)]
+
+  (wait-to-settle)
+
+  (let [pins [2,3,4,5,6,7,8,9]]
+    ; random light
+    (run-loop
+     (let [pin (rand-nth pins)]
+       (set-digital board pin :high)
+       (<!! (timeout 100))
+       (set-digital board pin :low)))))
