@@ -280,3 +280,27 @@
                                  (-> (:value %)
                                      (arduino-map manual-min 1023 0 255)
                                      (arduino-constrain 0 255))))))
+
+(defn to-voltage
+  "Takes an analog value and converts it to the true voltage value."
+  [x]
+  (* x 0.004882814))
+
+(defexample temperature-sensor
+  "7) Temperature Sensor
+
+  Use the \"serial monitor\" window to read a temperature sensor."
+  [board (open-board port-name)]
+
+  (wait-to-settle)
+
+  (enable-analog-in-reporting board 0 true)
+
+  (on-analog-event board 0 #(let [voltage (to-voltage (:value %))
+                                  degreeC (* (- voltage 0.5) 100.0)
+                                  degreeF (+ 32.0 (* degreeC (/ 9.0 5.0)))]
+                              (println "Voltage " voltage)
+                              (println degreeC "ºC")
+                              (println degreeF "ºF")))
+
+  )
