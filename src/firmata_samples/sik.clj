@@ -7,8 +7,9 @@
 
 (defn- wait-to-settle []
   ; TODO: This can be removed in future releases of clj-firmata
-  (println "waiting for things to settle")
-  (<!! (timeout 2000)))
+  (println "waiting for board to settle...")
+  (<!! (timeout 2000))
+  (println "ready"))
 
 (defexample blink
   "1) Blinking an LED
@@ -244,5 +245,38 @@
 
     (on-digital-event board 2 #(light-led (reset! pressed [(= :low (:value %)) (last @pressed) ])))
 
-    (on-digital-event board 3 #(light-led (reset! pressed [(first @pressed) (= :low (:value %))]))))
-  )
+    (on-digital-event board 3 #(light-led (reset! pressed [(first @pressed) (= :low (:value %))])))))
+
+(defn arduino-map
+  "Clojure implemation of the Arduino map function.
+  http://arduino.cc/en/reference/map"
+  [x, in-min, in-max, out-min, out-max]
+  (int (/ (* (- x  in-min) (- out-max out-min)) (+ (- in-max in-min) out-min))))
+
+(defn arduino-constrain
+  "Clojure implementation of the Arduino constrain function.
+  http://arduino.cc/en/Reference/Constrain"
+  [x min max]
+  (cond (< x min)      min
+        (<= min x max) x
+        :else          max))
+
+(defexample photo-resistor
+  "6) Photo Resistor
+
+  Use a photoresistor (light sensor) to control the brightness
+  of a LED."
+  [board (open-board port-name)]
+
+  (wait-to-settle)
+
+  (set-pin-mode board 9 :pwm)
+  (enable-analog-in-reporting board 0 true)
+
+  ; modify manual min to the min value of your photo resistor
+  (let [manual-min 300]
+   (on-analog-event board 0
+                    #(set-analog board 9
+                                 (-> (:value %)
+                                     (arduino-map manual-min 1023 0 255)
+                                     (arduino-constrain 0 255))))))
