@@ -328,7 +328,7 @@
 
      (<!! (timeout 1000))
 
-
+     ; step through 0 to 180 degrees and back
      (doseq [degree (concat (range 0 180 2)
                             (range 180 0 -1))]
        (set-analog board pin degree)
