@@ -251,7 +251,7 @@
   "Clojure implemation of the Arduino map function.
   http://arduino.cc/en/reference/map"
   [x, in-min, in-max, out-min, out-max]
-  (int (/ (* (- x  in-min) (- out-max out-min)) (+ (- in-max in-min) out-min))))
+  (+ (quot (* (- x  in-min) (- out-max out-min)) (- in-max in-min)) out-min))
 
 (defn arduino-constrain
   "Clojure implementation of the Arduino constrain function.
@@ -348,3 +348,44 @@
   (on-analog-event board 0 #(set-analog board 9 (-> (:value %)
                                                     (arduino-map 600 900 0 180)
                                                     (arduino-constrain 0 180)))))
+
+(defexample soft-potentiometer
+  "10) Soft Potentiometer
+
+  Use the soft potentiometer to change the color of the RGB LED"
+  [board (open-board port-name)]
+
+  (wait-to-settle)
+
+  (doseq [pin [9 10 11]]
+    (set-pin-mode board pin :pwm))
+
+  (enable-analog-in-reporting board 0 true)
+
+  (let [set-rgb (fn [v]
+                  ; Create the red peak, which is centered at 0.
+                  ;  (Because it's centered at 0, half is after 0, and half
+                  ; is before 1023):
+                  (let [redValue   (+ (-> v
+                                          (arduino-map 0 341 255 0)
+                                          (arduino-constrain 0 255))
+                                      (-> v
+                                          (arduino-map 682 1023 0 255)
+                                          (arduino-constrain 0 255)))
+                        greenValue (- (-> v
+                                          (arduino-map 0 341 0 255)
+                                          (arduino-constrain 0 255))
+                                      (-> v
+                                          (arduino-map 341 682 0 255)
+                                          (arduino-constrain 0 255)))
+                        blueValue  (- (-> v
+                                          (arduino-map 341 682 0 255)
+                                          (arduino-constrain 0 255))
+                                      (-> v
+                                          (arduino-map 682 1023 0 255)
+                                          (arduino-constrain 0 255)))]
+                    (set-analog board 9 redValue)
+                    (set-analog board 10 greenValue)
+                    (set-analog board 11 blueValue)))]
+
+    (on-analog-event board 0 #(set-rgb (:value %)))))
