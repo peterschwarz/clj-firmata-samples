@@ -333,3 +333,18 @@
                             (range 180 0 -1))]
        (set-analog board pin degree)
        (<!! (timeout 20))))))
+
+(defexample flex-sensor
+  "9) Flex Sensor
+
+  Use the \"flex sensor\" to change the position of a servo."
+  [board (open-board port-name)]
+
+  (wait-to-settle)
+
+  (set-pin-mode board 9 :servo)
+  (enable-analog-in-reporting board 0 true)
+
+  (on-analog-event board 0 #(set-analog board 9 (-> (:value %)
+                                                    (arduino-map 600 900 0 180)
+                                                    (arduino-constrain 0 180)))))
