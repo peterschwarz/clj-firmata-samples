@@ -301,6 +301,35 @@
                                   degreeF (+ 32.0 (* degreeC (/ 9.0 5.0)))]
                               (println "Voltage " voltage)
                               (println degreeC "ºC")
-                              (println degreeF "ºF")))
+                              (println degreeF "ºF"))))
 
-  )
+(defexample single-servo
+  "8) Single Servo
+
+  Sweep a servo back and forth through its full range of motion."
+  [board (open-board port-name)]
+
+  (wait-to-settle)
+
+  (let [pin 9]
+    (set-pin-mode board pin :servo)
+
+    (run-loop
+
+     (set-analog board pin 90)
+
+     (<!! (timeout 1000))
+
+     (set-analog board pin 180)
+
+     (<!! (timeout 1000))
+
+     (set-analog board pin 0)
+
+     (<!! (timeout 1000))
+
+
+     (doseq [degree (concat (range 0 180 2)
+                            (range 180 0 -1))]
+       (set-analog board pin degree)
+       (<!! (timeout 20))))))
