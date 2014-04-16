@@ -3,13 +3,9 @@
             [firmata-samples.board :refer :all]
             [firmata.core :refer :all]
             [firmata.receiver :refer :all]
+            [firmata.util :refer :all]
+            [firmata.shift :refer :all]
             [clojure.core.async :refer [timeout <!! <!]]))
-
-(defn- wait-to-settle []
-  ; TODO: This can be removed in future releases of clj-firmata
-  (println "waiting for board to settle...")
-  (<!! (timeout 2000))
-  (println "ready"))
 
 (defexample blink
   "1) Blinking an LED
@@ -33,8 +29,6 @@
 
   Read the values off of a potentiometer wired to analog pin A0"
   [board (open-board port-name)]
-
-  (wait-to-settle)
 
   (let [sensor (atom 1000)]
     (println "Enabling analog-in reporting")
@@ -62,8 +56,6 @@
 
   Make an RGB LED display a rainbow of colors!"
   [board (open-board port-name)]
-
-  (wait-to-settle)
 
   (let [red-pin 9
         green-pin 10
@@ -153,8 +145,6 @@
   A variety of samples which can be used with the 8-LED circuit."
   [board (open-board port-name)]
 
-  (wait-to-settle)
-
   (let [pins [2,3,4,5,6,7,8,9]]
 
     (run-loop
@@ -170,8 +160,6 @@
 
   A variety of samples which can be used with the 8-LED circuit."
   [board (open-board port-name)]
-
-  (wait-to-settle)
 
   (let [pins [2,3,4,5,6,7,8,9]]
 
@@ -195,8 +183,6 @@
   A variety of samples which can be used with the 8-LED circuit."
   [board (open-board port-name)]
 
-  (wait-to-settle)
-
   (let [pins [2,3,4,5,6,7,8,9]]
 
     (run-loop
@@ -214,8 +200,6 @@
   A variety of samples which can be used with the 8-LED circuit."
   [board (open-board port-name)]
 
-  (wait-to-settle)
-
   (let [pins [2,3,4,5,6,7,8,9]]
     ; random light
     (run-loop
@@ -229,8 +213,6 @@
 
   Dealing with digital inputs."
   [board (open-board port-name)]
-
-  (wait-to-settle)
 
   (let [pressed (atom [false false])
         light-led (fn [[left right]]
@@ -247,28 +229,12 @@
 
     (on-digital-event board 3 #(light-led (reset! pressed [(first @pressed) (= :low (:value %))])))))
 
-(defn arduino-map
-  "Clojure implemation of the Arduino map function.
-  http://arduino.cc/en/reference/map"
-  [x, in-min, in-max, out-min, out-max]
-  (+ (quot (* (- x  in-min) (- out-max out-min)) (- in-max in-min)) out-min))
-
-(defn arduino-constrain
-  "Clojure implementation of the Arduino constrain function.
-  http://arduino.cc/en/Reference/Constrain"
-  [x min max]
-  (cond (< x min)      min
-        (<= min x max) x
-        :else          max))
-
 (defexample photo-resistor
   "6) Photo Resistor
 
   Use a photoresistor (light sensor) to control the brightness
   of a LED."
   [board (open-board port-name)]
-
-  (wait-to-settle)
 
   (set-pin-mode board 9 :pwm)
   (enable-analog-in-reporting board 0 true)
@@ -281,18 +247,11 @@
                                      (arduino-map manual-min 1023 0 255)
                                      (arduino-constrain 0 255))))))
 
-(defn to-voltage
-  "Takes an analog value and converts it to the true voltage value."
-  [x]
-  (* x 0.004882814))
-
 (defexample temperature-sensor
   "7) Temperature Sensor
 
   Use the \"serial monitor\" window to read a temperature sensor."
   [board (open-board port-name)]
-
-  (wait-to-settle)
 
   (enable-analog-in-reporting board 0 true)
 
@@ -308,8 +267,6 @@
 
   Sweep a servo back and forth through its full range of motion."
   [board (open-board port-name)]
-
-  (wait-to-settle)
 
   (let [pin 9]
     (set-pin-mode board pin :servo)
@@ -340,8 +297,6 @@
   Use the \"flex sensor\" to change the position of a servo."
   [board (open-board port-name)]
 
-  (wait-to-settle)
-
   (set-pin-mode board 9 :servo)
   (enable-analog-in-reporting board 0 true)
 
@@ -354,8 +309,6 @@
 
   Use the soft potentiometer to change the color of the RGB LED"
   [board (open-board port-name)]
-
-  (wait-to-settle)
 
   (doseq [pin [9 10 11]]
     (set-pin-mode board pin :pwm))
@@ -389,3 +342,40 @@
                     (set-analog board 11 blueValue)))]
 
     (on-analog-event board 0 #(set-rgb (:value %)))))
+
+(defexample shift-register
+  "13) Shift Register
+
+  Use a shift register to turn three pins into eight (or more!) outputs"
+
+  [board (open-board port-name)]
+
+  (let [data-pin 2
+        clock-pin 3
+        latch-pin 4
+        up (reduce #(conj %1 (bit-set (last %1) %2)) [1] (range 1 8))
+        down (reverse up)
+        up-and-down (concat up down [0])]
+
+    (run-loop
+
+     (doseq [data up-and-down]
+       (shift-out board latch-pin data-pin clock-pin :lsb-first data)
+       (<!! (timeout 100))))))
+
+(defexample shift-register-binary-counter
+  "13) Shift Register
+
+  Uses a shift register to display binary counting"
+  [board (open-board port-name)]
+
+    (let [data-pin 2
+          clock-pin 3
+          latch-pin 4]
+
+      (run-loop
+
+       (doseq [x (range 256)]
+         (shift-out board latch-pin data-pin clock-pin :lsb-first x)
+         (<!! (timeout 100))))))
+
