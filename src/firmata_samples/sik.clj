@@ -363,3 +363,19 @@
        (shift-out board latch-pin data-pin clock-pin :lsb-first data)
        (<!! (timeout 100))))))
 
+(defexample shift-register-binary-counter
+  "13) Shift Register
+
+  Uses a shift register to display binary counting"
+  [board (open-board port-name)]
+
+    (let [data-pin 2
+          clock-pin 3
+          latch-pin 4]
+
+      (run-loop
+
+       (doseq [x (range 256)]
+         (shift-out board latch-pin data-pin clock-pin :lsb-first x)
+         (<!! (timeout 100))))))
+
