@@ -27,6 +27,10 @@
             (reset! state# {:board ~(last board-def) :channel (chan 1)})
             (let [~(first board-def) (:board @state#)
                   ~'__control-ch (:channel @state#)]
+
+              (println "Board Version:" (f/version ~(first board-def)))
+              (println "Board Firmare:" (f/firmware ~(first board-def)))
+
               ~(cons 'do body)
               @state#))
 
@@ -46,7 +50,7 @@
      (let [c# ~'__control-ch]
        (>!! c# :go)
        (go-loop []
-             (when-let [x (<! c#)]
+             (when-let [x# (<! c#)]
                ~(cons 'do body)
-               (>! c# :go)
+               (>! c# x#)
                (recur))))))
