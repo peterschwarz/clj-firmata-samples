@@ -382,7 +382,7 @@
 
 
 (defexample shift-register
-  "13) Shift Register
+  "14) Shift Register
 
   Use a shift register to turn three pins into eight (or more!) outputs"
 
