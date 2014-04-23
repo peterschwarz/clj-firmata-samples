@@ -363,6 +363,24 @@
 
   )
 
+(defexample relay
+  "13)
+
+  Use a transistor to drive a relay"
+
+  [board (open-board port-name)]
+
+  (let [pin 2
+        delay 1000]
+    (run-loop
+
+     (set-digital board pin :high)
+     (<! (timeout delay))
+
+     (set-digital board pin :low)
+     (<! (timeout delay)))))
+
+
 (defexample shift-register
   "13) Shift Register
 
