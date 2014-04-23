@@ -343,6 +343,26 @@
 
     (on-analog-event board 0 #(set-rgb (:value %)))))
 
+(defexample motor
+  "12) Spinning a motor
+
+  Use a transistor to spin a motor at different speeds."
+
+  [board (open-board port-name)]
+
+  (let [motor-pin 9]
+    (set-pin-mode board motor-pin :pwm)
+
+    (run-loop
+
+     (doseq [speed (range 0 256 4)]
+       (set-analog board motor-pin speed)
+       (<! (timeout 50)))
+
+     (<! (timeout 500))))
+
+  )
+
 (defexample shift-register
   "13) Shift Register
 
@@ -378,4 +398,5 @@
        (doseq [x (range 256)]
          (shift-out board latch-pin data-pin clock-pin :lsb-first x)
          (<!! (timeout 100))))))
+
 
