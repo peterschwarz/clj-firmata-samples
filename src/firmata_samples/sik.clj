@@ -365,7 +365,7 @@
   )
 
 (defexample relay
-  "13)
+  "13) Relay
 
   Use a transistor to drive a relay"
 
@@ -383,7 +383,7 @@
 
 
 (defexample shift-register
-  "14) Shift Register
+  "14) Shift Register - on and off
 
   Use a shift register to turn three pins into eight (or more!) outputs"
 
@@ -403,7 +403,7 @@
        (<!! (timeout 100))))))
 
 (defexample shift-register-binary-counter
-  "13) Shift Register
+  "14) Shift Register - Binary Counter
 
   Uses a shift register to display binary counting"
   [board (open-board port-name)]
