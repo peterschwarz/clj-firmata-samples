@@ -1,6 +1,7 @@
 (ns firmata-samples.sik
   (:require [firmata-samples.config :refer [port-name]]
             [firmata-samples.board :refer :all]
+            [firmata-samples.lcd :as lcd]
             [firmata.core :refer :all]
             [firmata.receiver :refer :all]
             [firmata.util :refer :all]
@@ -417,4 +418,22 @@
          (shift-out board latch-pin data-pin clock-pin :lsb-first x)
          (<!! (timeout 100))))))
 
+(defexample lcd
+  "15)
 
+  A Liquid Crystal Display (LCD) is a sophisticated module
+  that can be used to display text or numeric data."
+  [board (open-board port-name)]
+
+  (let [lcd (-> 
+              (lcd/create-lcd board 12 11 5 4 3 2)
+              (lcd/begin 16 2))
+        counter (atom 0)]
+      (lcd/clear lcd)
+
+      (lcd/print lcd "hello, world!")
+
+      (run-loop
+        (lcd/set-cursor lcd 0 1)
+        ; display every 100th loop iteration
+        (lcd/print lcd (quot (swap! counter inc) 100)))))
