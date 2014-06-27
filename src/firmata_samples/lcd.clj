@@ -172,7 +172,7 @@
 
         (command lcd (bit-or LCD_FUNCTIONSET @display-function))
 
-        (var-set display-control (bit-or LCD_DISPLAYON LCD_CURSORON LCD_BLINKON))
+        (var-set display-control (bit-or LCD_DISPLAYON LCD_CURSOROFF LCD_BLINKOFF))
 
         ; (display lcd)
         (command lcd @display-control)
@@ -221,7 +221,7 @@
 
 (defn set-cursor [lcd col row]
   (let [row-offsets [0x00 0x40 0x14 0x54]
-        r (if (>= row (:num-lines lcd)) (- row 1) row)]
+        r (if (>= row (:num-lines lcd)) (- (:num-lines lcd) 1) row)]
     (command lcd (bit-or LCD_SETDDRAMADDR (+ col (get row-offsets r)))))
   lcd)
 
