@@ -1,18 +1,18 @@
 (ns firmata-samples.sik
   (:require [firmata-samples.config :refer [port-name]]
             [firmata-samples.board :refer :all]
-            [firmata-samples.lcd :as lcd]
             [firmata.core :refer :all]
             [firmata.receiver :refer :all]
             [firmata.util :refer :all]
-            [firmata.shift :refer :all]
+            [partsbox.shift-register :as shift]
+            [partsbox.lcd :as lcd]
             [clojure.core.async :refer [timeout <!! <!]]))
 
 (defexample blink
   "1) Blinking an LED
 
   Blinks an LED wired to pin 13."
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
   (run-loop
    (let [pin 13
          sleep-time 1000]
@@ -29,7 +29,7 @@
   "2) Potentiometer
 
   Read the values off of a potentiometer wired to analog pin A0"
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (let [sensor (atom 1000)]
     (println "Enabling analog-in reporting")
@@ -56,7 +56,7 @@
   "3) RGB LED
 
   Make an RGB LED display a rainbow of colors!"
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (let [red-pin 9
         green-pin 10
@@ -144,7 +144,7 @@
   "4) Multiple LEDs - one after another
 
   A variety of samples which can be used with the 8-LED circuit."
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (let [pins [2,3,4,5,6,7,8,9]]
 
@@ -160,7 +160,7 @@
   "4) Multiple LEDs - one at a time and reverse
 
   A variety of samples which can be used with the 8-LED circuit."
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (let [pins [2,3,4,5,6,7,8,9]]
 
@@ -182,7 +182,7 @@
   "4) Multiple LEDs - marquee - mimic \"chase lights\" like those around signs.
 
   A variety of samples which can be used with the 8-LED circuit."
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (let [pins [2,3,4,5,6,7,8,9]]
 
@@ -199,7 +199,7 @@
   "4) Multiple LEDs - pick a random light
 
   A variety of samples which can be used with the 8-LED circuit."
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (let [pins [2,3,4,5,6,7,8,9]]
     ; random light
@@ -213,7 +213,7 @@
   "5) Push buttons
 
   Dealing with digital inputs."
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (let [pressed (atom [false false])
         light-led (fn [[left right]]
@@ -235,7 +235,7 @@
 
   Use a photoresistor (light sensor) to control the brightness
   of a LED."
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (set-pin-mode board 9 :pwm)
   (enable-analog-in-reporting board 0 true)
@@ -252,7 +252,7 @@
   "7) Temperature Sensor
 
   Use the \"serial monitor\" window to read a temperature sensor."
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (enable-analog-in-reporting board 0 true)
 
@@ -267,7 +267,7 @@
   "8) Single Servo
 
   Sweep a servo back and forth through its full range of motion."
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (let [pin 9]
     (set-pin-mode board pin :servo)
@@ -296,7 +296,7 @@
   "9) Flex Sensor
 
   Use the \"flex sensor\" to change the position of a servo."
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (set-pin-mode board 9 :servo)
   (enable-analog-in-reporting board 0 true)
@@ -309,7 +309,7 @@
   "10) Soft Potentiometer
 
   Use the soft potentiometer to change the color of the RGB LED"
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (doseq [pin [9 10 11]]
     (set-pin-mode board pin :pwm))
@@ -349,7 +349,7 @@
 
   Use a transistor to spin a motor at different speeds."
 
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (let [motor-pin 9]
     (set-pin-mode board motor-pin :pwm)
@@ -369,7 +369,7 @@
 
   Use a transistor to drive a relay"
 
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (let [pin 2
         delay 1000]
@@ -387,11 +387,12 @@
 
   Use a shift register to turn three pins into eight (or more!) outputs"
 
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (let [data-pin 2
         clock-pin 3
         latch-pin 4
+        shift-register (shift/create-shift-register board latch-pin data-pin clock-pin)
         up (reduce #(conj %1 (bit-set (last %1) %2)) [1] (range 1 8))
         down (reverse up)
         up-and-down (concat up down [0])]
@@ -399,23 +400,24 @@
     (run-loop
 
      (doseq [data up-and-down]
-       (shift-out board latch-pin data-pin clock-pin :lsb-first data)
+       (shift/shift-out shift-register data)
        (<!! (timeout 100))))))
 
 (defexample shift-register-binary-counter
   "14) Shift Register - Binary Counter
 
   Uses a shift register to display binary counting"
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
     (let [data-pin 2
           clock-pin 3
-          latch-pin 4]
+          latch-pin 4
+          shift-register (shift/create-shift-register board latch-pin data-pin clock-pin)]
 
       (run-loop
 
        (doseq [x (range 256)]
-         (shift-out board latch-pin data-pin clock-pin :lsb-first x)
+         (shift/shift-out shift-register x)
          (<!! (timeout 100))))))
 
 (defexample lcd
@@ -423,7 +425,7 @@
 
   A Liquid Crystal Display (LCD) is a sophisticated module
   that can be used to display text or numeric data."
-  [board (open-board port-name)]
+  [board (open-serial-board port-name)]
 
   (let [lcd (-> 
               (lcd/create-lcd board 12 11 5 4 3 2)

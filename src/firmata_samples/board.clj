@@ -4,11 +4,12 @@
             [clojure.core.async :refer [chan go-loop <! >! >!! timeout] :as a]))
 
 
-(defn reset-board
+(defn reset-board!
   "Resets the board on the given port to the basic state."
-  ([] (reset-board port-name))
+  ([] (reset-board! port-name))
   ([port]
-  (let [board (f/open-board port)]
+  (when-let [board (f/open-serial-board port)]
+    (f/reset-board board)
     (f/close! board))))
 
 (defprotocol BoardExample
@@ -36,9 +37,11 @@
 
            (stop-example
             [_]
-            (a/close! (:channel @state#))
-            (f/close! (:board @state#))
-            (reset! state# {}))
+            (when-let [b# (:board @state#)]
+              (f/reset-board b#)
+              (a/close! (:channel @state#))
+              (f/close! b#)
+              (reset! state# {})))
 
            ))))
 
